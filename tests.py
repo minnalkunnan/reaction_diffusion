@@ -45,7 +45,26 @@ def test_activator_decay_only():
     print("Test: activator decay only")
     animate_histories(A_hist, R_hist, save_every, title="Activator decay-only (Neumann)")
 
+def test_activator_propagation_only():
+    """
+    Propagation test: activator spike with production and decay, but no inhibitor production.
+    Expect wave propagation toward steady-state value.
+    """
+    p = params.copy()
+    p["act_prod_rate"] = 1.0
+    p["inh_prod_rate"] = 0.0
+
+    A_hist, R_hist = run_coupled_neumann(
+        N, steps, dt, dx, p,
+        init_mode="activator_spike",
+        spike_value=spike_value,
+        save_every=save_every,
+    )
+
+    print("Test: activator decay only")
+    animate_histories(A_hist, R_hist, save_every, title="Activator decay-only (Neumann)")
 
 if __name__ == "__main__":
-    test_inhibitor_diffusion_only()
-    test_activator_decay_only()
+    #test_inhibitor_diffusion_only()
+    #test_activator_decay_only()
+    test_activator_propagation_only()

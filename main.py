@@ -7,7 +7,7 @@ def main():
     # Run baseline simulation (two activator spikes, Neumann BC)
     A_hist, R_hist = run_coupled_neumann(
         N, steps, dt, dx, params,
-        init_mode="spikes",
+        init_mode="activator_spike",
         spike_value=spike_value,
         save_every=save_every,
     )
