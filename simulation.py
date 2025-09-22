@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 
 def hill_function(act_signal, inh_signal,
@@ -15,13 +16,22 @@ def initialize_fields(N, init_mode, spike_value):
     activator = np.zeros(N)
     inhibitor = np.zeros(N)
 
-    if init_mode == "spikes":          # two activator spikes
+    if init_mode == "two_activator_spikes":          # two activator spikes
         activator[5] = spike_value
         activator[85] = spike_value
     elif init_mode == "activator_spike":   # single activator spike
         activator[N // 2] = spike_value
     elif init_mode == "inhibitor_spike":   # single inhibitor spike
         inhibitor[N // 2] = spike_value
+    elif init_mode == "random":
+        activator = [random.uniform(0, spike_value) for _ in range(N)]
+        inhibitor = [random.uniform(0, spike_value) for _ in range(N)]
+    elif init_mode == "activator_on":
+        activator = [spike_value] * N
+    elif init_mode == "inhibitor_on":
+        inhibitor = [spike_value] * N
+    elif init_mode == "all_off":
+        pass
     else:
         raise ValueError(f"Unknown init_mode: {init_mode}")
 
