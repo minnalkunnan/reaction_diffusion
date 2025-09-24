@@ -17,6 +17,7 @@ params = {
     "inh_half_sat": 1.0,      # inhibitor half-saturation constant
     "act_decay_rate": 1.0,    # activator decay rate
     "basal_prod": 0.0,        # basal activator production
+    "act_diffusion": 1.0,      # if the activator is soluble, diffusion coefficient
     #Hill coefficients
     "act_hill_coeff": 3,      # activator Hill coefficient
     "inh_hill_coeff": 3,      # inhibitor Hill coefficient

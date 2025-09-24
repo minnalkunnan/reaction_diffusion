@@ -8,6 +8,7 @@ def main():
     A_hist, R_hist = run_coupled_neumann(
         N, steps, dt, dx, params,
         init_mode="activator_spike",
+        activator_type="membrane-tethered",
         spike_value=spike_value,
         save_every=save_every,
     )

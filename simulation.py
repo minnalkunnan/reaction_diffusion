@@ -10,7 +10,6 @@ def hill_function(act_signal, inh_signal,
     inh_term = (inh_signal / inh_half_sat) ** inh_hill_coeff if inh_signal > 0 else 0.0
     return (act_term + basal_prod) / (act_term + inh_term + 1.0 + basal_prod)
 
-
 def initialize_fields(N, init_mode, spike_value):
     """Initialize activator/inhibitor concentrations depending on mode."""
     activator = np.zeros(N)
@@ -38,90 +37,103 @@ def initialize_fields(N, init_mode, spike_value):
     return activator, inhibitor
 
 
-def update_interior(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p):
+def update_interior(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p, activator_type):
     """Update interior grid points (1 .. N-2)."""
     for i in range(1, N - 1):
-        act_signal = 0.5 * (activator[i - 1] + activator[i + 1])
+        #Set input activator value as self or as neighbours
+        if activator_type == "soluble":
+            act_signal = activator[i]
+        else:
+            act_signal = 0.5 * (activator[i - 1] + activator[i + 1])
+        #set inhibitor value as self
         inh_signal = inhibitor[i]
-
-        activator_new[i] = activator[i] + dt * (
-            p["act_prod_rate"] * hill_function(
-                act_signal, inh_signal,
-                p["act_half_sat"], p["inh_half_sat"],
-                p["act_hill_coeff"], p["inh_hill_coeff"],
-                p["basal_prod"]
-            )
-            - p["act_decay_rate"] * activator[i]
+        #Caluclate transcriptional reaction (Hill function)
+        hill_value = hill_function(
+            act_signal, inh_signal,
+            p["act_half_sat"], p["inh_half_sat"],
+            p["act_hill_coeff"], p["inh_hill_coeff"],
+            p["basal_prod"]
         )
+        #How much are we updating the activation concentration? Computing reaction and diffusion separately
+        reaction = dt * (p["act_prod_rate"] * hill_value - p["act_decay_rate"] * activator[i])
+        diffusion = (p["act_diffusion"] * dt / dx**2 * (activator[i + 1] - 2.0 * activator[i] + activator[i - 1])
+             if activator_type == "soluble" else 0.0) #NO diffusion if activator is membrane-tethered
+        #Actual update
+        activator_new[i] = activator[i] + reaction + diffusion
+
+        #inhibitor is always soluble, so we can compute all at once
         inhibitor_new[i] = (
             inhibitor[i]
-            + dt * (p["inh_prod_rate"] * hill_function(
-                act_signal, inh_signal,
-                p["act_half_sat"], p["inh_half_sat"],
-                p["act_hill_coeff"], p["inh_hill_coeff"],
-                p["basal_prod"]
-            )
-            - p["inh_decay_rate"] * inhibitor[i])
-            + p["inh_diffusion"] * dt / dx**2 * (inhibitor[i + 1] - 2.0 * inhibitor[i] + inhibitor[i - 1])
+            + dt * (p["inh_prod_rate"] * hill_value - p["inh_decay_rate"] * inhibitor[i]) #reaction
+            + p["inh_diffusion"] * dt / dx**2 * (inhibitor[i + 1] - 2.0 * inhibitor[i] + inhibitor[i - 1]) #diffusion
         )
 
 
-def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p):
+def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p, activator_type):
     """Update Neumann boundary conditions (zero-flux)."""
     # Left boundary
     idx, left = 0, 1
-    act_signal = activator[left]
+    if activator_type == "soluble":
+        act_signal = activator[idx]
+    else:
+        act_signal = activator[left]
     inh_signal = inhibitor[idx]
-    activator_new[idx] = activator[idx] + dt * (
-        p["act_prod_rate"] * hill_function(
-            act_signal, inh_signal,
-            p["act_half_sat"], p["inh_half_sat"],
-            p["act_hill_coeff"], p["inh_hill_coeff"],
-            p["basal_prod"]
-        )
-        - p["act_decay_rate"] * activator[idx]
+
+    #Caluclate transcriptional reaction (Hill function)
+    hill_value = hill_function(
+        act_signal, inh_signal,
+        p["act_half_sat"], p["inh_half_sat"],
+        p["act_hill_coeff"], p["inh_hill_coeff"],
+        p["basal_prod"]
     )
+
+    #How much are we updating the activation concentration? Computing reaction and diffusion separately
+    reaction = dt * (p["act_prod_rate"] * hill_value - p["act_decay_rate"] * activator[idx])
+    diffusion = (p["act_diffusion"] * dt / dx**2 * (activator[left] - activator[idx])
+         if activator_type == "soluble" else 0.0) #NO diffusion if activator is membrane-tethered
+    #Actual update
+    activator_new[idx] = activator[idx] + reaction + diffusion
+
     inhibitor_new[idx] = (
-        inhibitor[idx]
-        + dt * (p["inh_prod_rate"] * hill_function(
-            act_signal, inh_signal,
-            p["act_half_sat"], p["inh_half_sat"],
-            p["act_hill_coeff"], p["inh_hill_coeff"],
-            p["basal_prod"]
-        )
-        - p["inh_decay_rate"] * inhibitor[idx])
-        + p["inh_diffusion"] * dt / dx**2 * (2.0 * (inhibitor[left] - inhibitor[idx]))
+        inhibitor[idx] +
+        dt * (p["inh_prod_rate"] * hill_value - p["inh_decay_rate"] * inhibitor[idx]) #reaction
+        + p["inh_diffusion"] * dt / dx**2 * (inhibitor[left] - inhibitor[idx]) #diffusion
     )
 
     # Right boundary
     idx, right = N - 1, N - 2
-    act_signal = activator[right]
+    if activator_type == "soluble":
+        act_signal = activator[idx]
+    else:
+        act_signal = activator[right]
     inh_signal = inhibitor[idx]
-    activator_new[idx] = activator[idx] + dt * (
-        p["act_prod_rate"] * hill_function(
-            act_signal, inh_signal,
-            p["act_half_sat"], p["inh_half_sat"],
-            p["act_hill_coeff"], p["inh_hill_coeff"],
-            p["basal_prod"]
-        )
-        - p["act_decay_rate"] * activator[idx]
+
+    #Caluclate transcriptional reaction (Hill function)
+    hill_value = hill_function(
+        act_signal, inh_signal,
+        p["act_half_sat"], p["inh_half_sat"],
+        p["act_hill_coeff"], p["inh_hill_coeff"],
+        p["basal_prod"]
     )
+
+    #How much are we updating the activation concentration? Computing reaction and diffusion separately
+    reaction = dt * (p["act_prod_rate"] * hill_value - p["act_decay_rate"] * activator[idx])
+    diffusion = (p["act_diffusion"] * dt / dx**2 * (activator[right] - activator[idx])
+         if activator_type == "soluble" else 0.0) #NO diffusion if activator is membrane-tethered
+    #Actual update
+    activator_new[idx] = activator[idx] + reaction + diffusion
+
     inhibitor_new[idx] = (
-        inhibitor[idx]
-        + dt * (p["inh_prod_rate"] * hill_function(
-            act_signal, inh_signal,
-            p["act_half_sat"], p["inh_half_sat"],
-            p["act_hill_coeff"], p["inh_hill_coeff"],
-            p["basal_prod"]
-        )
-        - p["inh_decay_rate"] * inhibitor[idx])
-        + p["inh_diffusion"] * dt / dx**2 * (2.0 * (inhibitor[right] - inhibitor[idx]))
+        inhibitor[idx] +
+        dt * (p["inh_prod_rate"] * hill_value - p["inh_decay_rate"] * inhibitor[idx]) #reaction
+        + p["inh_diffusion"] * dt / dx**2 * (inhibitor[right] - inhibitor[idx]) #diffusion
     )
 
 
 def run_coupled_neumann(
     N, steps, dt, dx, p,
     init_mode="spikes",
+    activator_type="membrane-bound",
     spike_value=5.0,
     save_every=10
 ):
@@ -135,8 +147,8 @@ def run_coupled_neumann(
         activator_new = activator.copy()
         inhibitor_new = inhibitor.copy()
 
-        update_interior(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p)
-        update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p)
+        update_interior(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p, activator_type)
+        update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p, activator_type)
 
         # Enforce non-negativity
         activator_new = np.maximum(activator_new, 0.0)
