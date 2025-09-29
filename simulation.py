@@ -20,6 +20,9 @@ def initialize_fields(N, init_mode, spike_value):
         activator[85] = spike_value
     elif init_mode == "activator_spike":   # single activator spike
         activator[N // 2] = spike_value
+    elif init_mode == "activator_spike_with_background":   # single activator spike
+        activator = [0.2] * N
+        activator[N // 2] = spike_value
     elif init_mode == "inhibitor_spike":   # single inhibitor spike
         inhibitor[N // 2] = spike_value
     elif init_mode == "random":
@@ -47,7 +50,7 @@ def update_interior(activator, inhibitor, activator_new, inhibitor_new, N, dt, d
             act_signal = 0.5 * (activator[i - 1] + activator[i + 1])
         #set inhibitor value as self
         inh_signal = inhibitor[i]
-        #Caluclate transcriptional reaction (Hill function)
+        #calculate transcriptional reaction (Hill function)
         hill_value = hill_function(
             act_signal, inh_signal,
             p["act_half_sat"], p["inh_half_sat"],
@@ -79,7 +82,7 @@ def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt,
         act_signal = activator[left]
     inh_signal = inhibitor[idx]
 
-    #Caluclate transcriptional reaction (Hill function)
+    #Calculate transcriptional reaction (Hill function)
     hill_value = hill_function(
         act_signal, inh_signal,
         p["act_half_sat"], p["inh_half_sat"],
@@ -108,7 +111,7 @@ def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt,
         act_signal = activator[right]
     inh_signal = inhibitor[idx]
 
-    #Caluclate transcriptional reaction (Hill function)
+    #calculate transcriptional reaction (Hill function)
     hill_value = hill_function(
         act_signal, inh_signal,
         p["act_half_sat"], p["inh_half_sat"],
@@ -131,7 +134,7 @@ def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt,
 
 
 def run_coupled_neumann(
-    N, steps, dt, dx, p,
+    N, steps, dt, dx, p, stopping_threshold,
     init_mode="spikes",
     activator_type="membrane-bound",
     spike_value=5.0,
@@ -144,20 +147,30 @@ def run_coupled_neumann(
     inhibitor_history = [inhibitor.copy()]
 
     for step in range(steps):
-        activator_new = activator.copy()
-        inhibitor_new = inhibitor.copy()
+        activator_previous = activator.copy()
+        inhibitor_previous = inhibitor.copy()
+
+        activator_new = np.empty_like(activator)
+        inhibitor_new = np.empty_like(inhibitor)
 
         update_interior(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p, activator_type)
         update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt, dx, p, activator_type)
 
         # Enforce non-negativity
-        activator_new = np.maximum(activator_new, 0.0)
-        inhibitor_new = np.maximum(inhibitor_new, 0.0)
+        #activator_new = np.maximum(activator_new, 0.0)
+        #inhibitor_new = np.maximum(inhibitor_new, 0.0)
 
         activator, inhibitor = activator_new, inhibitor_new
 
         if step % save_every == 0:
             activator_history.append(activator.copy())
             inhibitor_history.append(inhibitor.copy())
+
+            #Compare the two steps to decide when to stop simulation
+            diff = np.sum(np.abs(activator_new - activator_previous)) + np.sum(np.abs(inhibitor_new - inhibitor_previous))
+            #Sum of differences for each point for activator + inhibitor between new and previous steps
+            if step > 1000 and diff/(2*N) < stopping_threshold: #average change per step per tile of less than 0.000001
+                print(f"Converged at step {step}, total average diff = {diff}")
+                break
 
     return activator_history, inhibitor_history
