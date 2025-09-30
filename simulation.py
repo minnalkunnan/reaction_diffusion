@@ -163,14 +163,16 @@ def run_coupled_neumann(
         activator, inhibitor = activator_new, inhibitor_new
 
         if step % save_every == 0:
+            #Compare the two steps to decide when to stop simulation
+            diff = np.sum(np.abs(activator_new - activator_history[-1])) + np.sum(np.abs(inhibitor_new - inhibitor_history[-1]))
+
+            #Add new values to history
             activator_history.append(activator.copy())
             inhibitor_history.append(inhibitor.copy())
 
-            #Compare the two steps to decide when to stop simulation
-            diff = np.sum(np.abs(activator_new - activator_previous)) + np.sum(np.abs(inhibitor_new - inhibitor_previous))
             #Sum of differences for each point for activator + inhibitor between new and previous steps
             if step > 1000 and diff/(2*N) < stopping_threshold: #average change per step per tile of less than 0.000001
-                print(f"Converged at step {step}, total average diff = {diff}")
+                print(f"Converged at step {step}, total average difference per tile over {save_every} steps = {diff/(2*N)}")
                 break
 
     return activator_history, inhibitor_history

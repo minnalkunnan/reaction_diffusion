@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 
-def animate_histories(A_hist, R_hist, save_every, title="Coupled Dynamics (Neumann)"):
+def animate_histories(A_hist, R_hist, save_every, title="Coupled Dynamics (Neumann)", loop = False):
     """Animate activator and inhibitor histories side by side."""
     num_frames = len(A_hist)
 
@@ -24,6 +24,20 @@ def animate_histories(A_hist, R_hist, save_every, title="Coupled Dynamics (Neuma
         ax.set_title(f"{title}\nStep {frame * save_every}")
         return [line_A, line_R]
 
-    ani = FuncAnimation(fig, update, frames=num_frames, interval=50, blit=False)
+    ani = FuncAnimation(fig, update, frames=num_frames, interval=50, blit=False, repeat = loop)
     plt.tight_layout()
     plt.show()
+
+def plot_last_frame(A_hist_last, R_hist_last, outfile_png, title="Final state (last frame)"):
+    """Plot the final state (last frame) of activator and inhibitor and save as PNG."""
+    fig, ax = plt.subplots()
+    ax.plot(A_hist_last, "--", color="red", label="Activator")
+    ax.plot(R_hist_last, "--", color="blue", label="Inhibitor")
+    ax.set_ylim(0, max(1e-6, max(max(A_hist_last), max(R_hist_last)) * 1.2))
+    ax.set_title(title)
+    ax.set_xlabel("Space (Cell Index)")
+    ax.set_ylabel("Concentration")
+    ax.legend(loc="upper right", fontsize=9)
+    plt.tight_layout()
+    fig.savefig(outfile_png)
+    plt.close(fig)
