@@ -21,11 +21,11 @@ def main():
         args.vis = False
 
     #Define initiation mode and activator type
-    init_mode = "random"
+    init_mode = "activator_spike"
     activator_type = "membrane-tethered"
 
     # Run baseline simulation (two activator spikes, Neumann BC)
-    A_hist, R_hist = run_coupled_neumann(
+    A_hist, R_hist, final_step = run_coupled_neumann(
         N, steps, dt, dx, params, stopping_threshold,
         init_mode=init_mode,
         activator_type=activator_type,
@@ -36,11 +36,11 @@ def main():
     # If --output is provided, save results to file + static plot
     if args.output:
         outfile_txt, outfile_png = write_simulation_results(
-            args, activator_type, init_mode, spike_value, params, A_hist, R_hist
+            args, activator_type, init_mode, spike_value, params, A_hist, R_hist, final_step
         )
 
         # Save static plot
-        plot_last_frame(A_hist[-1], R_hist[-1], outfile_png)
+        plot_last_frame(A_hist[-1], R_hist[-1], final_step, outfile_png)
         print(f"Final state plot saved to {outfile_png}")
 
     # Visualization and/or movie saving

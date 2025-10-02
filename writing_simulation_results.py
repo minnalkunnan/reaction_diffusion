@@ -11,7 +11,7 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError("Boolean value expected (True/False).")
 
-def write_simulation_results(args, activator_type, init_mode, spike_value, params, A_hist, R_hist):
+def write_simulation_results(args, activator_type, init_mode, spike_value, params, A_hist, R_hist, final_step):
     """Write simulation variables and last frame data to TXT and return output paths."""
     outdir = "simulation_results"
     os.makedirs(outdir, exist_ok=True)
@@ -25,6 +25,7 @@ def write_simulation_results(args, activator_type, init_mode, spike_value, param
         f.write(f"activator_type\t{activator_type}\n")
         f.write(f"init_mode\t{init_mode}\n")
         f.write(f"spike_value\t{spike_value}\n")
+        f.write(f"total_steps\t{final_step}\n")
 
         # params dictionary
         for k, v in params.items():

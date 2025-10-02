@@ -43,8 +43,9 @@ def animate_histories(A_hist, R_hist, save_every,
         plt.show()
 
 
-def plot_last_frame(A_hist_last, R_hist_last, outfile_png, title="Final state (last frame)"):
+def plot_last_frame(A_hist_last, R_hist_last, final_step, outfile_png):
     """Plot the final state (last frame) of activator and inhibitor and save as PNG."""
+    title = f"Final state (step {final_step})"
     fig, ax = plt.subplots()
     ax.plot(A_hist_last, "--", color="red", label="Activator")
     ax.plot(R_hist_last, "--", color="blue", label="Inhibitor")

@@ -178,4 +178,4 @@ def run_coupled_neumann(
                 print(f"Converged at step {step}, total average difference per tile over {save_every} steps = {diff/(2*N)}")
                 break
 
-    return activator_history, inhibitor_history
+    return activator_history, inhibitor_history, step
