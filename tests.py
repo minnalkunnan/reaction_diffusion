@@ -15,7 +15,7 @@ def test_inhibitor_diffusion_only():
     p["act_prod_rate"] = 0.0
     p["act_decay_rate"] = 0.0
 
-    A_hist, R_hist = run_coupled_neumann(
+    A_hist, R_hist, final_step = run_coupled_neumann(
         N, steps, dt, dx, p, stopping_threshold,
         init_mode="both_spike",
         spike_value=spike_value,
@@ -37,7 +37,7 @@ def test_activator_and_inhibitor_diffusion():
     p["inh_decay_rate"] = 0.0
     p["act_decay_rate"] = 0.0
 
-    A_hist, R_hist = run_coupled_neumann(
+    A_hist, R_hist, final_step = run_coupled_neumann(
         N, steps, dt, dx, p, stopping_threshold,
         init_mode="both_spike",
         activator_type="soluble",
@@ -58,7 +58,7 @@ def test_decay_only():
     p["act_prod_rate"] = 0.0
     p["inh_prod_rate"] = 0.0
 
-    A_hist, R_hist = run_coupled_neumann(
+    A_hist, R_hist, final_step = run_coupled_neumann(
         N, steps, dt, dx, p, stopping_threshold,
         init_mode="both_spike",
         spike_value=spike_value,
@@ -77,7 +77,7 @@ def test_activator_propagation_only_no_diffusion():
     p["act_prod_rate"] = 3.0
     p["inh_prod_rate"] = 0.0
 
-    A_hist, R_hist = run_coupled_neumann(
+    A_hist, R_hist, final_step = run_coupled_neumann(
         N, steps, dt, dx, p, stopping_threshold,
         init_mode="activator_spike",
         activator_type="membrane-tethered",
@@ -97,7 +97,7 @@ def test_activator_propagation_only_with_diffusion():
     p["act_prod_rate"] = 3.0
     p["inh_prod_rate"] = 0.0
 
-    A_hist, R_hist = run_coupled_neumann(
+    A_hist, R_hist, final_step = run_coupled_neumann(
         N, steps, dt, dx, p, stopping_threshold,
         init_mode="activator_spike",
         activator_type="soluble",
