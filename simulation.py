@@ -23,6 +23,9 @@ def initialize_fields(N, init_mode, spike_value):
     elif init_mode == "activator_spike_with_background":   # single activator spike
         activator = [0.2] * N
         activator[N // 2] = spike_value
+    elif init_mode == "both_spike":
+        activator[N // 2] = spike_value
+        inhibitor[N // 2] = spike_value
     elif init_mode == "inhibitor_spike":   # single inhibitor spike
         inhibitor[N // 2] = spike_value
     elif init_mode == "random":

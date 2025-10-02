@@ -1,9 +1,16 @@
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+from matplotlib.animation import FuncAnimation, FFMpegWriter
 
 
-def animate_histories(A_hist, R_hist, save_every, title="Coupled Dynamics (Neumann)", loop = False):
-    """Animate activator and inhibitor histories side by side."""
+def animate_histories(A_hist, R_hist, save_every,
+                      title="Coupled Dynamics (Neumann)",
+                      loop=False, savefile=None, fps=20):
+    """
+    Animate activator and inhibitor histories side by side.
+
+    If savefile is None, show interactively with plt.show().
+    If savefile is a string (e.g., 'movie.mp4' or 'movie.gif'), save to that file.
+    """
     num_frames = len(A_hist)
 
     fig, ax = plt.subplots()
@@ -24,9 +31,17 @@ def animate_histories(A_hist, R_hist, save_every, title="Coupled Dynamics (Neuma
         ax.set_title(f"{title}\nStep {frame * save_every}")
         return [line_A, line_R]
 
-    ani = FuncAnimation(fig, update, frames=num_frames, interval=50, blit=False, repeat = loop)
-    plt.tight_layout()
-    plt.show()
+    ani = FuncAnimation(fig, update, frames=num_frames, interval=50, blit=False, repeat=loop)
+
+    if savefile:  # Save movie
+        writer = FFMpegWriter(fps=fps)
+        ani.save(savefile, writer=writer)
+        plt.close(fig)
+        print(f"Movie saved to {savefile}")
+    else:  # Just show
+        plt.tight_layout()
+        plt.show()
+
 
 def plot_last_frame(A_hist_last, R_hist_last, outfile_png, title="Final state (last frame)"):
     """Plot the final state (last frame) of activator and inhibitor and save as PNG."""
