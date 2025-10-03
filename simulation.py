@@ -179,3 +179,33 @@ def run_coupled_neumann(
                 break
 
     return activator_history, inhibitor_history, step
+
+
+def run_simulation(params):
+    """
+    Thin wrapper to call run_coupled_neumann with a parameter dict.
+    """
+    result = run_coupled_neumann(
+        params["N"],
+        params["steps"],
+        params["dt"],
+        params["dx"],
+        params,
+        params.get("stopping_threshold", 1e-6),
+        init_mode=params.get("init_mode", "activator_spike"),
+        activator_type=params.get("activator_type", "membrane-tethered"),
+        spike_value=params.get("spike_value", 5.0),
+        save_every=params.get("save_every", 100),
+    )
+
+    activator_hist, inhibitor_hist, steps_used = result
+
+    return {
+        "status": "converged",  # your loop prints convergence info already
+        "steps_used": steps_used,
+        "activator_final": activator_hist[-1],
+        "inhibitor_final": inhibitor_hist[-1],
+        "activator_history": activator_hist,
+        "inhibitor_history": inhibitor_hist,
+    }
+
