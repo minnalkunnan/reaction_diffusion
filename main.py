@@ -1,8 +1,8 @@
 import argparse
 import os
-from parameters import params, N, steps, dt, dx, save_every, spike_value, stopping_threshold
+from parameters import params, N, steps, dt, dx, save_every, spike_value, stopping_threshold, min_steps
 from simulation import run_coupled_neumann
-from visualize import animate_histories, plot_last_frame
+from visualize import animate_histories, plot_one_frame
 from writing_simulation_results import str2bool, write_simulation_results
 
 
@@ -10,8 +10,9 @@ def main():
     parser = argparse.ArgumentParser(description="Run coupled Neumann simulation.")
     parser.add_argument("--output", type=str, help="Base name of output file (without extension). "
                                                    "Will save simulation_results/NAME.txt and NAME.png.")
+    parser.add_argument("--start", action="store_true", help="If activated, will also return initial frame as a png.")
     parser.add_argument("--vis", type=str2bool, nargs="?", const=True, default=True,
-                        help="Whether to show visualization (True/False). Default = True.")
+                        help="Whether to show visualization (True/False). Default = True, unless --output is activated.")
     parser.add_argument("--movie", action="store_true",
                         help="If set, also save an MP4 movie using the same basename as --output.")
     args = parser.parse_args()
@@ -21,12 +22,12 @@ def main():
         args.vis = False
 
     #Define initiation mode and activator type
-    init_mode = "activator_spike"
-    activator_type = "membrane-tethered"
+    init_mode = "random_tight"
+    activator_type = "juxtacrine"
 
     # Run baseline simulation (two activator spikes, Neumann BC)
     A_hist, R_hist, final_step = run_coupled_neumann(
-        N, steps, dt, dx, params, stopping_threshold,
+        N, steps, dt, dx, params, stopping_threshold, min_steps,
         init_mode=init_mode,
         activator_type=activator_type,
         spike_value=spike_value,
@@ -40,8 +41,14 @@ def main():
         )
 
         # Save static plot
-        plot_last_frame(A_hist[-1], R_hist[-1], final_step, outfile_png)
+        plot_one_frame(A_hist[-1], R_hist[-1], final_step, outfile_png)
         print(f"Final state plot saved to {outfile_png}")
+
+        if args.start:
+            outdir = "simulation_results"
+            outfile_start = os.path.join(outdir, args.output + "_start.png")
+            plot_one_frame(A_hist[1], R_hist[1], 0, outfile_start)
+            print(f"Initial state plot saved to {outfile_start}")
 
     # Visualization and/or movie saving
     if args.vis or args.movie:

@@ -31,9 +31,15 @@ def initialize_fields(N, init_mode, spike_value):
     elif init_mode == "random":
         activator = [random.uniform(0, spike_value) for _ in range(N)]
         inhibitor = [random.uniform(0, spike_value) for _ in range(N)]
+    elif init_mode == "random_tight":
+        activator = [random.uniform(spike_value - 0.05, spike_value + 0.05) for _ in range(N)]
+        inhibitor = [random.uniform(spike_value - 0.05, spike_value + 0.05) for _ in range(N)]
     elif init_mode == "activator_on":
         activator = [spike_value] * N
     elif init_mode == "inhibitor_on":
+        inhibitor = [spike_value] * N
+    elif init_mode == "both_on":
+        activator = [spike_value] * N
         inhibitor = [spike_value] * N
     elif init_mode == "all_off":
         pass
@@ -137,9 +143,9 @@ def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt,
 
 
 def run_coupled_neumann(
-    N, steps, dt, dx, p, stopping_threshold,
+    N, steps, dt, dx, p, stopping_threshold, min_steps,
     init_mode="spikes",
-    activator_type="membrane-bound",
+    activator_type="juxtacrine",
     spike_value=5.0,
     save_every=10
 ):
@@ -174,7 +180,7 @@ def run_coupled_neumann(
             inhibitor_history.append(inhibitor.copy())
 
             #Sum of differences for each point for activator + inhibitor between new and previous steps
-            if step > 1000 and diff/(2*N) < stopping_threshold: #average change per step per tile of less than 0.000001
+            if step > min_steps and diff/(2*N) < stopping_threshold: #average change per step per tile of less than 0.000001
                 print(f"Converged at step {step}, total average difference per tile over {save_every} steps = {diff/(2*N)}")
                 break
 
@@ -191,21 +197,23 @@ def run_simulation(params):
         params["dt"],
         params["dx"],
         params,
-        params.get("stopping_threshold", 1e-6),
+        params.get("stopping_threshold", 1e-4),
+        params.get("min_steps", 10000),
         init_mode=params.get("init_mode", "activator_spike"),
-        activator_type=params.get("activator_type", "membrane-tethered"),
+        activator_type=params.get("activator_type", "juxtacrine"),
         spike_value=params.get("spike_value", 5.0),
         save_every=params.get("save_every", 100),
+
     )
 
     activator_hist, inhibitor_hist, steps_used = result
 
     return {
-        "status": "converged",  # your loop prints convergence info already
+        "status": "done",  # your loop prints convergence info already
         "steps_used": steps_used,
+        "parameters": params,
+        "activator_initial": activator_hist[0],
         "activator_final": activator_hist[-1],
-        "inhibitor_final": inhibitor_hist[-1],
-        "activator_history": activator_hist,
-        "inhibitor_history": inhibitor_hist,
+        "inhibitor_initial": inhibitor_hist[0],
+        "inhibitor_final": inhibitor_hist[-1]
     }
-

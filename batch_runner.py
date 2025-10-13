@@ -9,27 +9,33 @@ from simulation import run_simulation
 
 param_list = [
     {
-        "N": 100,
-        "steps": 50000,
+        #General parameters
+        "N": 500,
+        "steps": 100000,
         "dt": 1e-2,
         "dx": 1.0,
-        "act_prod_rate": 1.0,
-        "inh_prod_rate": i,   # varies systematically
-        "act_decay_rate": 0.1,
-        "inh_decay_rate": 0.1,
-        "inh_diffusion": 0.5,   # fixed
+        "init_mode": "random_tight",
+        "activator_type": "membrane-tethered",
+        "spike_value": 3,
+        "save_every": 200,
+        "stopping_threshold": 1e-4,
+        "min_steps": 10000,
+
+        #Non-dimensionalized
+        "act_decay_rate": 1.0,
         "act_half_sat": 1.0,
         "inh_half_sat": 1.0,
-        "act_hill_coeff": 2.0,
-        "inh_hill_coeff": 2.0,
-        "basal_prod": 0.01,
-        "init_mode": "two_activator_spikes",
-        "spike_value": 5.0,
-        "save_every": 100,
-        "tol": 1e-6,
-        "patience": 500,
+        "basal_prod": 0.0,
+        #Hill coefficients
+        "act_hill_coeff": 3,
+        "inh_hill_coeff": 3,
+        #Other parameters
+        "act_prod_rate": 3.0,
+        "inh_prod_rate": 3.0,
+        "inh_decay_rate": i,
+        "inh_diffusion": 10.0
     }
-    for i in range(1, 101)  # 100 sims, inh_prod_rate = 1, 2, ..., 100
+    for i in np.linspace(1.1, 2, 10)
 ]
 
 
@@ -37,11 +43,12 @@ param_list = [
 def run_and_summarize(p):
     result = run_simulation(p)
     return {
-        "status": result["status"],
+        "parameters": result["parameters"],
         "steps_used": result["steps_used"],
-        "inh_prod_rate": p["inh_prod_rate"],   # keep varied parameter
-        "A_diff": result["activator_final"].max() - result["activator_final"].min(),
-        "I_diff": result["inhibitor_final"].max() - result["inhibitor_final"].min(),
+        "activator_initial": result["activator_initial"],
+        "activator_final": result["activator_final"],
+        "inhibitor_initial": result["inhibitor_initial"],
+        "inhibitor_final": result["inhibitor_final"]
     }
 
 results = Parallel(n_jobs=-1)(

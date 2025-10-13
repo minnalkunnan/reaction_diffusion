@@ -17,7 +17,7 @@ def write_simulation_results(args, activator_type, init_mode, spike_value, param
     os.makedirs(outdir, exist_ok=True)
 
     outfile_txt = os.path.join(outdir, args.output + ".txt")
-    outfile_png = os.path.join(outdir, args.output + ".png")
+    outfile_png = os.path.join(outdir, args.output + "_end.png")
 
     # Save results as text
     with open(outfile_txt, "w") as f:

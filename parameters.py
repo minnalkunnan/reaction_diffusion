@@ -3,11 +3,12 @@
 # -------------------------
 N = 101
 dx = 1.0
-steps = 200_000
+steps = 100_000
 dt = 0.01
 save_every = 200
 spike_value = 5.0
 stopping_threshold = 1e-4
+min_steps = 10000
 
 # -------------------------
 # Default reaction-diffusion parameters
