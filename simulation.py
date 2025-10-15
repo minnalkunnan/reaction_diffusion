@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from finding_steady_states import fast_stable_steady_state
 
 
 def hill_function(act_signal, inh_signal,
@@ -10,12 +11,20 @@ def hill_function(act_signal, inh_signal,
     inh_term = (inh_signal / inh_half_sat) ** inh_hill_coeff if inh_signal > 0 else 0.0
     return (act_term + basal_prod) / (act_term + inh_term + 1.0 + basal_prod)
 
-def initialize_fields(N, init_mode, spike_value):
+def initialize_fields(N, init_mode, spike_value, spike_value_a = 0, spike_value_i = 0):
     """Initialize activator/inhibitor concentrations depending on mode."""
     activator = np.zeros(N)
     inhibitor = np.zeros(N)
 
-    if init_mode == "two_activator_spikes":          # two activator spikes
+    if init_mode == "random_tight": #5% random noise around steady state value of a and i
+        activator = [random.uniform(spike_value_a - 0.05 * spike_value_a, spike_value_a + 0.05 * spike_value_a) for _ in range(N)]
+        inhibitor = [random.uniform(spike_value_i - 0.05 * spike_value_i, spike_value_i + 0.05 * spike_value_i) for _ in range(N)]
+    elif init_mode == "spike_steady_state": #Starts with calculated steady state value (no diffusion) at one point in space
+        activator[N // 2] = spike_value_a
+        inhibitor[N // 2] = spike_value_i
+    elif init_mode == "activator_spike_steady_state":   # single activator spike
+        activator[N // 2] = spike_value_a
+    elif init_mode == "two_activator_spikes":          # two activator spikes
         activator[5] = spike_value
         activator[85] = spike_value
     elif init_mode == "activator_spike":   # single activator spike
@@ -31,9 +40,6 @@ def initialize_fields(N, init_mode, spike_value):
     elif init_mode == "random":
         activator = [random.uniform(0, spike_value) for _ in range(N)]
         inhibitor = [random.uniform(0, spike_value) for _ in range(N)]
-    elif init_mode == "random_tight":
-        activator = [random.uniform(spike_value - 0.05, spike_value + 0.05) for _ in range(N)]
-        inhibitor = [random.uniform(spike_value - 0.05, spike_value + 0.05) for _ in range(N)]
     elif init_mode == "activator_on":
         activator = [spike_value] * N
     elif init_mode == "inhibitor_on":
@@ -45,6 +51,10 @@ def initialize_fields(N, init_mode, spike_value):
         pass
     else:
         raise ValueError(f"Unknown init_mode: {init_mode}")
+
+    # Ensure float arrays in all cases
+    activator = np.array(activator, dtype=float)
+    inhibitor = np.array(inhibitor, dtype=float)
 
     return activator, inhibitor
 
@@ -150,7 +160,31 @@ def run_coupled_neumann(
     save_every=10
 ):
     """Run activator–inhibitor simulation with Neumann boundary conditions."""
-    activator, inhibitor = initialize_fields(N, init_mode, spike_value)
+
+    # --- Build initial fields ---
+    if init_mode == "random_tight" or init_mode == "peak_steady_state" or init_mode == "activator_spike_steady_state":
+        # Try to get the non-null, reaction-stable steady state (fast)
+        try:
+            a_ss, i_ss, H_ss = fast_stable_steady_state(p, tol=5e-4, max_newton=12)
+        except Exception:
+            a_ss = i_ss = 0.0
+
+        # Fallback to provided spike_value if solver didn't find a non-null state
+        if not (a_ss > 0.0 and i_ss > 0.0 and np.isfinite(a_ss) and np.isfinite(i_ss)):
+            a_ss = float(spike_value)
+            i_ss = float(spike_value)
+
+        # Use the steady-state values as per-species spikes/levels
+        activator, inhibitor = initialize_fields(
+            N,
+            init_mode,
+            spike_value,               # keep generic spike_value if your initializer uses it
+            spike_value_a=float(a_ss),
+            spike_value_i=float(i_ss),
+        )
+    else:
+        # Default path: whatever your initializer already does
+        activator, inhibitor = initialize_fields(N, init_mode, spike_value)
 
     activator_history = [activator.copy()]
     inhibitor_history = [inhibitor.copy()]
