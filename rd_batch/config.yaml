@@ -1,0 +1,42 @@
+outdir: runs/exp-001
+mode: grid
+
+base:
+  N: 100
+  steps: 100000
+  dt: 0.01
+  dx: 1.0
+  save_every: 200
+  stopping_threshold: 0.0001
+  min_steps: 500
+
+  init_mode: random_tight
+  activator_type: juxtacrine
+  spike_value: 3
+
+  act_decay_rate: 1.0
+  act_half_sat: 1.0
+  inh_half_sat: 1.0
+  basal_prod: 0.0
+
+  act_hill_coeff: 3
+  inh_hill_coeff: 3
+
+  act_prod_rate: 3.0
+  inh_prod_rate: 3.0
+  inh_decay_rate: 1.0
+
+  inh_diffusion: 10.0
+
+sweeps:
+  act_prod_rate: [1.0, 10.0, 10]
+  # 3-item list => linspace start..stop with num points
+  inh_prod_rate:
+    lin: [1.0, 10.0, 10]  # alternative explicit 'lin' form
+  inh_decay_rate:
+    lin: [1.0, 10.0, 10]
+  # explicit list of values is also fine:
+  # inh_prod_rate: [1.0, 2.0, 3.0, 5.0, 8.0]
+  # or logarithmic in decades:
+  # inh_diffusion:
+  #   log: [0, 2, 6]      # 10^0..10^2 with 6 points

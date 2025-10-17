@@ -48,7 +48,7 @@ def parse_list_string(s):
 
 
 # === Load file ===
-input_file = "batch_results_500-cells-V01.csv"
+input_file = "batch_results.csv"
 df = pd.read_csv(input_file)
 
 dominant_freqs = []
