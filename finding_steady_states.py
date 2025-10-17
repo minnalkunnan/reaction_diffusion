@@ -2,10 +2,13 @@ import math
 import numpy as np
 
 # ---------- Hill with gradients (scalar-fast) ----------
-def hill_with_grads(a, i, ka, ki, n, m, basal=0.0):
+def hill_with_grads(a, i, ka, ki, n, m, basal=0.0, activator_type = "juxtacrine"):
     # Guard against zero/negatives
     ka = float(ka); ki = float(ki)
     a = float(max(a, 0.0)); i = float(max(i, 0.0))
+    if activator_type == "juxtacrine":
+        a = 2*a
+
 
     # aa=(a/ka)^n, ii=(i/ki)^m
     if ka <= 0 or ki <= 0:
@@ -30,7 +33,7 @@ def hill_with_grads(a, i, ka, ki, n, m, basal=0.0):
     return H, dH_da, dH_di
 
 # ---------- Fast non-null, stable steady-state finder ----------
-def fast_stable_steady_state(p, tol=5e-4, max_newton=12):
+def fast_stable_steady_state(p, activator_type = "juxtacrine", tol=5e-4, max_newton=12):
     """
     Returns (a*, i*, H*) for the non-null reaction-stable fixed point.
     Target precision ~1e-3 on a*, i* (2-3 decimals).
@@ -49,7 +52,7 @@ def fast_stable_steady_state(p, tol=5e-4, max_newton=12):
     H_hi = basal + 1.0 - 1e-9
 
     def F(H):
-        Hval, _, _ = hill_with_grads(A*H, I*H, ka, ki, n, m, basal)
+        Hval, _, _ = hill_with_grads(A*H, I*H, ka, ki, n, m, basal, activator_type)
         return Hval
 
     def g(H):
@@ -198,15 +201,3 @@ def _round_if_needed(x, tol):
     # If you target ~1e-3 in H, a and i inherit that scale; round to 1e-3
     dec = 3 if tol <= 1e-3 else 2
     return float(np.round(x, dec))
-
-p = dict(
-    act_half_sat=1.0, inh_half_sat=1.0,
-    act_hill_coeff=12, inh_hill_coeff=4,
-    basal_prod=0.0,
-    act_prod_rate=6.0, act_decay_rate=1.0,
-    inh_prod_rate=6.0, inh_decay_rate=0.1
-)
-
-#a_ss, i_ss, H_ss = fast_stable_steady_state(p, tol=5e-4)  # ~2–3 decimals
-
-#print(a_ss, i_ss, H_ss)

@@ -66,7 +66,7 @@ def update_interior(activator, inhibitor, activator_new, inhibitor_new, N, dt, d
         if activator_type == "soluble":
             act_signal = activator[i]
         else:
-            act_signal = 0.5 * (activator[i - 1] + activator[i + 1])
+            act_signal = (activator[i - 1] + activator[i + 1])
         #set inhibitor value as self
         inh_signal = inhibitor[i]
         #calculate transcriptional reaction (Hill function)
@@ -98,7 +98,7 @@ def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt,
     if activator_type == "soluble":
         act_signal = activator[idx]
     else:
-        act_signal = activator[left]
+        act_signal = 2 * activator[left]
     inh_signal = inhibitor[idx]
 
     #Calculate transcriptional reaction (Hill function)
@@ -127,7 +127,7 @@ def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt,
     if activator_type == "soluble":
         act_signal = activator[idx]
     else:
-        act_signal = activator[right]
+        act_signal = 2 * activator[right]
     inh_signal = inhibitor[idx]
 
     #calculate transcriptional reaction (Hill function)
@@ -165,7 +165,7 @@ def run_coupled_neumann(
     if init_mode == "random_tight" or init_mode == "peak_steady_state" or init_mode == "activator_spike_steady_state":
         # Try to get the non-null, reaction-stable steady state (fast)
         try:
-            a_ss, i_ss, H_ss = fast_stable_steady_state(p, tol=5e-4, max_newton=12)
+            a_ss, i_ss, H_ss = fast_stable_steady_state(p, activator_type, tol=5e-4, max_newton=12)
         except Exception:
             a_ss = i_ss = 0.0
 
@@ -215,8 +215,8 @@ def run_coupled_neumann(
 
             #Sum of differences for each point for activator + inhibitor between new and previous steps
             if step > min_steps and diff/(2*N) < stopping_threshold: #average change per step per tile of less than 0.000001
-                print(f"Converged at step {step}, total average difference per tile over {save_every} steps = {diff/(2*N)}")
                 break
+    print(f"Stopped at step {step}, total average difference per tile over {save_every} steps = {diff/(2*N)}")
 
     return activator_history, inhibitor_history, step
 
