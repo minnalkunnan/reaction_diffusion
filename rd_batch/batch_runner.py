@@ -15,8 +15,8 @@ from grid import make_param_grid
 from io_utils import _to_json_list, write_constants_txt
 
 OUTPUT_COLS = [
-    "steps_used", "activator_initial", "activator_final",
-    "inhibitor_initial", "inhibitor_final"
+    "steps_used", "activator_final",
+    "inhibitor_final"
 ]
 
 def run_one(p, varied_keys):
@@ -24,9 +24,9 @@ def run_one(p, varied_keys):
     row = {k: p[k] for k in varied_keys}
     row.update({
         "steps_used": r.get("steps_used"),
-        "activator_initial": _to_json_list(r.get("activator_initial")),
+        #"activator_initial": _to_json_list(r.get("activator_initial")),
         "activator_final": _to_json_list(r.get("activator_final")),
-        "inhibitor_initial": _to_json_list(r.get("inhibitor_initial")),
+        #"inhibitor_initial": _to_json_list(r.get("inhibitor_initial")),
         "inhibitor_final": _to_json_list(r.get("inhibitor_final")),
     })
     return row

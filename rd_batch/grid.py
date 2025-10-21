@@ -5,30 +5,40 @@ from typing import Dict, Iterable, List, Tuple, Union, Any
 ArrayLike = Union[Iterable[float], np.ndarray, Tuple[float, float, int]]
 
 def _to_values(val: Union[ArrayLike, Dict[str, Tuple[float, float, int]], List[Any]]):
-    """Normalize a sweep spec into a 1D array of values.
-
-    Accepted forms:
-      - explicit list/ndarray: [0.1, 0.2, ...]
-      - 3-item list/tuple: [start, stop, num] -> linspace
-      - {'lin': (start, stop, num)} -> linspace
-      - {'log': (exp_start, exp_stop, num)} -> logspace in decades
+    """
+    Accepted YAML forms:
+      - [v1, v2, ...]                   -> explicit values
+      - [start, stop, num]              -> linspace
+      - {lin: [start, stop, num]}       -> linspace
+      - {log: [exp_start, exp_stop, n]} -> logspace (10**exp)
+      - list of any of the above        -> concatenate segments
     """
     # dict forms
     if isinstance(val, dict):
         if "lin" in val:
             a, b, n = val["lin"]
-            return np.linspace(a, b, n)
+            return np.linspace(a, b, int(n))
         if "log" in val:
             a, b, n = val["log"]
-            return np.logspace(a, b, n)  # 10**a .. 10**b
+            return np.logspace(a, b, int(n))
         raise ValueError(f"Unknown sweep dict: {val}")
 
-    # YAML turns tuples into lists; treat any 3-length list/tuple as linspace
-    if isinstance(val, (list, tuple)) and len(val) == 3 and all(isinstance(x, (int, float)) for x in val):
-        a, b, n = val
-        return np.linspace(a, b, int(n))
+    # list/tuple
+    if isinstance(val, (list, tuple)):
+        # Concatenate if it's a list-of-specs (e.g., [[...], {...}, ...])
+        if any(isinstance(x, (list, tuple, dict)) for x in val):
+            parts = [_to_values(x) for x in val]
+            # optional: drop duplicate touching endpoints between segments
+            out = np.concatenate(parts)
+            return out
+        # A single 3-item numeric spec => linspace
+        if len(val) == 3 and all(isinstance(x, (int, float)) for x in val):
+            a, b, n = val
+            return np.linspace(a, b, int(n))
+        # Otherwise treat as explicit values
+        return np.array(list(val), dtype=float)
 
-    # otherwise: explicit value list
+    # Fallback: explicit iterable
     return np.array(list(val), dtype=float)
 
 def make_param_grid(
