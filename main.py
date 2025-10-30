@@ -1,6 +1,6 @@
 import argparse
 import os
-from parameters import params, N, steps, dt, dx, save_every, spike_value, stopping_threshold, min_steps
+from parameters import params, N, steps, dt, dx, save_every, spike_value, stopping_threshold, min_steps, init_mode, activator_type
 from simulation import run_coupled_neumann
 from visualize import animate_histories, plot_one_frame
 from writing_simulation_results import str2bool, write_simulation_results
@@ -20,10 +20,6 @@ def main():
     # If movie is requested and user did not explicitly set --vis, turn off visualization
     if args.movie and args.vis is True and "--vis" not in " ".join(os.sys.argv):
         args.vis = False
-
-    #Define initiation mode and activator type
-    init_mode = "random_tight"
-    activator_type = "juxtacrine"
 
     # Run baseline simulation (two activator spikes, Neumann BC)
     A_hist, R_hist, final_step = run_coupled_neumann(

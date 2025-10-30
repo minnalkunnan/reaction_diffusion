@@ -10,6 +10,10 @@ spike_value = 5.0
 stopping_threshold = 1e-4
 min_steps = 10000
 
+#Define initiation mode and activator type
+init_mode = "activator_spike_steady_state"
+activator_type = "soluble"
+
 # -------------------------
 # Default reaction-diffusion parameters
 # -------------------------
