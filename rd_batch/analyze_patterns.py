@@ -1,8 +1,14 @@
+import sys
+from pathlib import Path
 import numpy as np
 import pandas as pd
-import ast
 import re
 import matplotlib.pyplot as plt
+
+# allow importing simulation.py from parent directory
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
 from visualize import plot_one_frame
 
 def analyze_pattern(a, dx=1.0, plot=False):
@@ -48,11 +54,17 @@ def parse_list_string(s):
 
 
 # === Load file ===
-input_file = "batch_results.csv"
+if len(sys.argv) < 2:
+    print("Usage: python analyze_batch.py <path/to/batch_results.csv>")
+    sys.exit(1)
+
+input_file = sys.argv[1] + "/batch_results.csv"
 df = pd.read_csv(input_file)
 
 dominant_freqs = []
 dominant_wavelengths = []
+a_max = []
+a_diff = []
 
 for i, row in df.iterrows():
     a = parse_list_string(row["activator_final"])
@@ -60,7 +72,13 @@ for i, row in df.iterrows():
         print(f"Skipping row {i}: could not parse activator_final")
         dominant_freqs.append(np.nan)
         dominant_wavelengths.append(np.nan)
+        a_diff.append(np.nan)
+        a_max.append(np.nan)
         continue
+
+    amax_single = a.max()
+    a_max.append(amax_single)
+    a_diff.append(amax_single - a.min())
 
     if np.std(a) < 1e-6 or np.isnan(a).any():
         dominant_freqs.append(np.nan)
@@ -73,8 +91,7 @@ for i, row in df.iterrows():
 
 df["dominant_freq"] = dominant_freqs
 df["dominant_wavelength"] = dominant_wavelengths
+df["max_a"] = a_max
+df["diff_a"] = a_diff
 
-df_out = df[["parameters", "dominant_freq", "dominant_wavelength"]]
-df_out.to_csv("dominant_wavelengths_summary.csv", index=False)
-
-print(df_out)
+df.to_csv(sys.argv[1] + "/patterning_summary.csv", index=False)

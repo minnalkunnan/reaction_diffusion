@@ -22,7 +22,7 @@ def main():
         args.vis = False
 
     # Run baseline simulation (two activator spikes, Neumann BC)
-    A_hist, R_hist, final_step = run_coupled_neumann(
+    A_hist, R_hist, final_step, a_ss, i_ss = run_coupled_neumann(
         N, steps, dt, dx, params, stopping_threshold, min_steps,
         init_mode=init_mode,
         activator_type=activator_type,
