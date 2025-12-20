@@ -68,7 +68,7 @@ def update_interior(activator, inhibitor, activator_new, inhibitor_new, N, dt, d
         if activator_type == "paracrine":
             act_signal = activator[i]
         else:
-            act_signal = (activator[i - 1] + activator[i + 1])
+            act_signal = (activator[i - 1] + activator[i + 1])/2
         #set inhibitor value as self
         inh_signal = inhibitor[i]
         #calculate transcriptional reaction (Hill function)
@@ -100,7 +100,7 @@ def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt,
     if activator_type == "paracrine":
         act_signal = activator[idx]
     else:
-        act_signal = 2 * activator[left]
+        act_signal = activator[left]
     inh_signal = inhibitor[idx]
 
     #Calculate transcriptional reaction (Hill function)
@@ -129,7 +129,7 @@ def update_boundaries(activator, inhibitor, activator_new, inhibitor_new, N, dt,
     if activator_type == "paracrine":
         act_signal = activator[idx]
     else:
-        act_signal = 2 * activator[right]
+        act_signal = activator[right]
     inh_signal = inhibitor[idx]
 
     #calculate transcriptional reaction (Hill function)

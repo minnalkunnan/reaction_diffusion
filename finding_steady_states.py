@@ -6,8 +6,6 @@ def hill_with_grads(a, i, ka, ki, n, m, basal=0.0, activator_type = "juxtacrine"
     # Guard against zero/negatives
     ka = float(ka); ki = float(ki)
     a = float(max(a, 0.0)); i = float(max(i, 0.0))
-    if activator_type == "juxtacrine":
-        a = 2*a
 
 
     # aa=(a/ka)^n, ii=(i/ki)^m
