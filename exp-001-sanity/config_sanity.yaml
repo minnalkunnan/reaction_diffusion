@@ -1,0 +1,9 @@
+base:
+  steps: 2000
+  save_every: 200
+  min_steps: 200
+
+sweeps:
+  act_prod_rate: [4.0, 6.0]
+  inh_prod_rate: [3.0, 5.0]
+
