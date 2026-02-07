@@ -15,7 +15,7 @@ base:
   spike_value: 10
 
   act_decay_rate: 1.0
-  act_half_sat: 2.0
+  act_half_sat: 1.0
   inh_half_sat: 1.0
   basal_prod: 0.0
 
